@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HOI-Diff: Text-Driven Synthesis of 3D Human-Object Interactions</title>
+  <meta name="description" content="HOI-Diff generates realistic motions for 3D human–object interactions from text prompts and object geometry." />
+  <meta property="og:title" content="HOI-Diff: Text-Driven Synthesis of 3D Human-Object Interactions" />
+  <meta property="og:description" content="Dual-branch diffusion for human & object motions, affordance prediction diffusion, classifier guidance with contact points." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="assets/teaser.jpg" />
+  <meta name="theme-color" content="#101316" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: #0c0f12; --card: #101418; --muted: #8ea0b5; --text: #e9eef5; --acc: #4cb8ff; --acc2:#9bffb1;
+      --ring: rgba(76,184,255,0.35);
+    }
+    @media (prefers-color-scheme: light){
+      :root{ --bg:#f7f9fc; --card:#ffffff; --muted:#556476; --text:#0d1117; --acc:#0078ff; --acc2:#00c26e; --ring: rgba(0,120,255,.2); }
+      .hero{ background-image: radial-gradient(40% 120% at 50% -10%, #e6f2ff 0, transparent 60%), radial-gradient(50% 120% at 120% 10%, #e7fff0 0, transparent 60%); }
+    }
+    *{ box-sizing: border-box }
+    html,body{ margin:0; padding:0; background:var(--bg); color:var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, sans-serif; }
+    a{ color: var(--acc); text-decoration: none }
+    a:hover{ text-decoration: underline }
+    .container{ width:min(1100px, 92vw); margin-inline:auto; }
+    .nav{ position:sticky; top:0; z-index:50; backdrop-filter: blur(10px); background: color-mix(in srgb, var(--bg) 80%, transparent); border-bottom:1px solid rgba(255,255,255,0.06); }
+    .nav-inner{ display:flex; align-items:center; gap:16px; padding:10px 6px; }
+    .brand{ font-weight:800; letter-spacing:.3px; }
+    .spacer{ flex:1 }
+    .nav a{ padding:8px 10px; border-radius:10px; }
+
+    .hero{ position:relative; padding:56px 0 24px; border-bottom:1px solid rgba(255,255,255,0.06); overflow:hidden; }
+    .hero h1{ margin:0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height:1.05; letter-spacing:-0.02em; }
+    .subtitle{ color: var(--muted); font-weight:600; margin-bottom:12px }
+
+    .actions{ display:flex; flex-wrap:wrap; gap:10px; margin:22px 0 6px }
+    .btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; background:var(--card); border:1px solid rgba(255,255,255,0.08); color:var(--text); font-weight:600; }
+    .btn:hover{ border-color: var(--acc); box-shadow: 0 0 0 3px var(--ring); text-decoration:none }
+    .btn.primary{ background: linear-gradient(90deg, var(--acc), var(--acc2)); color:#091016 }
+
+    .grid{ display:grid; grid-template-columns: 1fr; gap:22px }
+    @media (min-width: 860px){ .grid.two{ grid-template-columns: 1.2fr .8fr } }
+
+    .card{ background: var(--card); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:18px; }
+    .card h3{ margin:2px 0 12px; font-size:20px }
+
+    .authors{ display:flex; flex-wrap:wrap; gap:10px 18px; margin:10px 0 4px; }
+    .author a{ color:inherit }
+    .affils{ color: var(--muted); font-size:14px; margin:8px 0 0 }
+    .star{ font-size: 0.92em; vertical-align: super }
+
+    .teaser{ aspect-ratio: 16/9; border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.08); background:#0b0e12; display:grid; place-items:center }
+    .teaser img, .teaser video{ width:100%; height:100%; object-fit:cover }
+
+    .section{ padding:34px 0 }
+    .section h2{ margin:0 0 16px; font-size: clamp(22px, 3vw, 30px) }
+    .muted{ color: var(--muted) }
+
+    .list-badges{ display:flex; flex-wrap:wrap; gap:10px }
+    .badge{ padding:6px 10px; border-radius:999px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); font-size:13px }
+
+    .code{ font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; white-space: pre; background:#0a0e13; color:#dbeafe; padding:14px; border-radius:12px; border:1px solid rgba(255,255,255,0.08); overflow:auto }
+
+    .gallery{ display:grid; grid-template-columns: repeat(2,1fr); gap:12px }
+    @media (min-width: 780px){ .gallery{ grid-template-columns: repeat(4,1fr) } }
+    .thumb{ aspect-ratio: 1/1; border-radius:12px; background:#0b0e12; border:1px solid rgba(255,255,255,0.08); display:grid; place-items:center; overflow:hidden }
+    .thumb img{ width:100%; height:100%; object-fit:cover }
+
+    footer{ padding:28px 0 60px; color: var(--muted); font-size:14px }
+
+    /* Tabs */
+    .tabs{ display:flex; gap:8px; margin-bottom:12px }
+    .tab{ padding:6px 10px; border:1px solid rgba(255,255,255,0.12); border-radius:10px; cursor:pointer; background:transparent }
+    .tab[aria-selected="true"]{ background: rgba(255,255,255,0.08); border-color: var(--acc); }
+    .tabpanels > div{ display:none }
+    .tabpanels > div[aria-hidden="false"]{ display:block }
+  </style>
+</head>
+<body>
+  <!-- Top Nav -->
+  <div class="nav">
+    <div class="container nav-inner">
+      <div class="brand">HOI-Diff</div>
+      <a href="#abstract">Abstract</a>
+      <a href="#method">Method</a>
+      <a href="#results">Results</a>
+      <a href="#data">Data</a>
+      <a href="#citation">Citation</a>
+      <div class="spacer"></div>
+      <a class="btn" href="#" id="paperLink">Paper</a>
+      <a class="btn" href="#" id="codeLink">Code</a>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="container grid two">
+      <div>
+        <h1>HOI-Diff: Text-Driven Synthesis of 3D Human‑Object Interactions using Diffusion Models</h1>
+        <div class="subtitle">CVPR 2025 Workshop of HuMoGen</div>
+
+        <!-- Authors -->
+        <div class="authors">
+          <div class="author">Xiaogang Peng<span class="star">*</span><sup>1</sup></div>
+          <div class="author">Yiming Xie<span class="star">*</span><sup>1</sup></div>
+          <div class="author">Zizhao Wu<sup>2</sup></div>
+          <div class="author">Varun Jampani<sup>3</sup></div>
+          <div class="author">Deqing Sun<sup>4</sup></div>
+          <div class="author">Huaizu Jiang<sup>1</sup></div>
+        </div>
+        <div class="affils">1 Northeastern University &nbsp;·&nbsp; 2 Hangzhou Dianzi University &nbsp;·&nbsp; 3 Stability AI &nbsp;·&nbsp; 4 Google Research &nbsp;&nbsp; <span class="muted">* equal contribution</span></div>
+
+        <!-- Action Buttons -->
+        <div class="actions">
+          <a class="btn primary" href="#" id="projectBtn">Project Page</a>
+          <a class="btn" href="#" id="arxivBtn">arXiv</a>
+          <a class="btn" href="#" id="videoBtn">Video</a>
+          <a class="btn" href="#" id="datasetBtn">Dataset</a>
+          <a class="btn" href="#" id="bibtexBtn">BibTeX</a>
+        </div>
+
+        <div class="list-badges">
+          <div class="badge">Text → 3D HOIs</div>
+          <div class="badge">Dual-branch Diffusion</div>
+          <div class="badge">Affordance Prediction (APDM)</div>
+          <div class="badge">Classifier Guidance w/ Contacts</div>
+          <div class="badge">BEHAVE + OMOMO</div>
+        </div>
+      </div>
+
+      <!-- Teaser media (replace src with your image/video) -->
+      <div class="teaser">
+        <!-- Example placeholder image; replace with your teaser.jpg or an embedded <video> -->
+        <img src="assets/teaser.jpg" alt="HOI-Diff teaser: human-object interactions generated from text and object geometry" />
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Abstract (with EN/中文 tabs) -->
+    <section id="abstract" class="section">
+      <h2>Abstract</h2>
+      <div class="tabs" role="tablist" aria-label="Abstract language">
+        <button class="tab" role="tab" aria-selected="true" aria-controls="abs-en" id="tab-en">English</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="abs-zh" id="tab-zh">中文</button>
+      </div>
+      <div class="tabpanels">
+        <div id="abs-en" role="tabpanel" aria-hidden="false">
+          <p>
+            We address the problem of generating realistic 3D human–object interactions (HOIs) driven by textual prompts. We propose a modular approach that decomposes the task into sub‑problems. First, a dual‑branch diffusion model (HOI‑DM) generates both human and object motions conditioned on text, with a cross‑attention communication module to encourage coherence. Next, an affordance prediction diffusion model (APDM) predicts human‑object contact regions from the text prompt. APDM is independent of HOI‑DM outputs and can correct its errors, while also sampling contact points to diversify motions. Finally, we incorporate the estimated contacts into classifier guidance to achieve accurate, close interactions. We annotate the BEHAVE dataset with text descriptions for training and evaluation. Experiments on BEHAVE and OMOMO show realistic HOIs across diverse interactions and object categories.
+          </p>
+        </div>
+        <div id="abs-zh" role="tabpanel" aria-hidden="true">
+          <p>
+            我们研究由文本驱动的真实三维人‑物交互（HOI）生成问题。为此，我们采用模块化设计，将复杂任务分解为更简单的子任务。首先，我们提出双分支扩散模型（HOI‑DM），在文本条件下同时生成人体与物体运动，并通过跨注意力通信模块促进两者的协同。其次，我们提出可供性预测扩散模型（APDM），根据文本预测交互过程中的接触区域。APDM 独立于 HOI‑DM 的结果，能纠正其潜在错误，并通过随机化接触点来丰富多样性。最后，我们将估计的接触点融入分类器引导，实现精确且紧密的人‑物接触。我们为 BEHAVE 数据集标注了文本描述用于训练与评估。在 BEHAVE 与 OMOMO 上的实验表明，我们的方法在多种交互与不同物体类型上均能生成逼真的 HOI。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Method -->
+    <section id="method" class="section">
+      <h2>Method Overview</h2>
+      <div class="grid two">
+        <div class="card">
+          <h3>HOI‑DM: Dual‑Branch Diffusion</h3>
+          <p class="muted">Generate human and object motions in parallel under text conditioning.</p>
+          <ul>
+            <li>Two diffusion branches (human / object) with shared text encoder.</li>
+            <li>Cross‑attention communication to align trajectories and timing.</li>
+            <li>Outputs temporally coherent motion sequences.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>APDM: Affordance Prediction</h3>
+          <p class="muted">Predict likely contact regions given the text and object geometry.</p>
+          <ul>
+            <li>Independent of HOI‑DM to enable error correction.</li>
+            <li>Stochastic sampling of contact points for diverse motions.</li>
+            <li>Contact‑aware losses during training.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>Classifier Guidance with Contact Points</h3>
+        <p>Estimated contact points are injected as guidance to enforce accurate, close human‑object interactions at inference time.</p>
+        <div class="teaser" style="margin-top:10px">
+          <!-- Replace with a pipeline diagram -->
+          <img src="assets/pipeline.png" alt="Method pipeline diagram" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section id="results" class="section">
+      <h2>Results</h2>
+      <p class="muted">Generated HOIs from various text prompts and object categories.</p>
+      <div class="gallery">
+        <!-- Replace thumbnails with your result images or auto‑playing GIFs -->
+        <div class="thumb"><img src="assets/results/res1.jpg" alt="Sample result 1"/></div>
+        <div class="thumb"><img src="assets/results/res2.jpg" alt="Sample result 2"/></div>
+        <div class="thumb"><img src="assets/results/res3.jpg" alt="Sample result 3"/></div>
+        <div class="thumb"><img src="assets/results/res4.jpg" alt="Sample result 4"/></div>
+        <div class="thumb"><img src="assets/results/res5.jpg" alt="Sample result 5"/></div>
+        <div class="thumb"><img src="assets/results/res6.jpg" alt="Sample result 6"/></div>
+        <div class="thumb"><img src="assets/results/res7.jpg" alt="Sample result 7"/></div>
+        <div class="thumb"><img src="assets/results/res8.jpg" alt="Sample result 8"/></div>
+      </div>
+    </section>
+
+    <!-- Data / Annotations -->
+    <section id="data" class="section">
+      <h2>Data & Annotations</h2>
+      <div class="grid two">
+        <div class="card">
+          <h3>BEHAVE (w/ text)</h3>
+          <p>We annotate <em>BEHAVE</em> with text descriptions describing HOI intents, object categories, and contact affordances for training and evaluation.</p>
+          <ul>
+            <li>#Videos / #Sequences: <span class="muted">fill in numbers</span></li>
+            <li>Text vocab size: <span class="muted">fill in</span></li>
+            <li>License & usage: <span class="muted">fill in</span></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>OMOMO</h3>
+          <p>We evaluate generalization to <em>OMOMO</em> with diverse object types and interaction styles.</p>
+          <ul>
+            <li>Objects: <span class="muted">fill in</span></li>
+            <li>Interaction types: <span class="muted">fill in</span></li>
+            <li>Metrics: <span class="muted">fill in</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- BibTeX -->
+    <section id="citation" class="section">
+      <h2>Citation</h2>
+      <div class="card">
+        <div style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap">
+          <div class="muted">If you find this work useful, please cite:</div>
+          <button id="copyBib" class="btn">Copy BibTeX</button>
+        </div>
+        <pre class="code" id="bibtex">
+@inproceedings{peng2025hoidiff,
+  title     = {HOI-Diff: Text-Driven Synthesis of 3D Human-Object Interactions using Diffusion Models},
+  author    = {Peng, Xiaogang and Xie, Yiming and Wu, Zizhao and Jampani, Varun and Sun, Deqing and Jiang, Huaizu},
+  booktitle = {CVPR Workshops (HuMoGen)},
+  year      = {2025}
+}
+        </pre>
+      </div>
+    </section>
+
+    <!-- FAQ / Contact -->
+    <section class="section">
+      <h2>Contact</h2>
+      <p class="muted">Questions or media inquiries? Email <a href="mailto:contact@example.com">contact@example.com</a>.</p>
+    </section>
+  </main>
+
+  <footer class="container">
+    <div>© 2025 The HOI-Diff Authors. All rights reserved.</div>
+    <div class="muted">This site uses only static HTML/CSS/JS. Replace placeholder images under <code>assets/</code> with your own media.</div>
+  </footer>
+
+  <script>
+    // --- Tabs for Abstract ---
+    const enBtn = document.getElementById('tab-en');
+    const zhBtn = document.getElementById('tab-zh');
+    const enPanel = document.getElementById('abs-en');
+    const zhPanel = document.getElementById('abs-zh');
+
+    function selectTab(which){
+      const en = which === 'en';
+      enBtn.setAttribute('aria-selected', en);
+      zhBtn.setAttribute('aria-selected', !en);
+      enPanel.setAttribute('aria-hidden', !en);
+      zhPanel.setAttribute('aria-hidden', en);
+    }
+    enBtn.addEventListener('click', () => selectTab('en'));
+    zhBtn.addEventListener('click', () => selectTab('zh'));
+
+    // --- Copy BibTeX ---
+    document.getElementById('copyBib').addEventListener('click', async () => {
+      const text = document.getElementById('bibtex').innerText.trim();
+      try {
+        await navigator.clipboard.writeText(text);
+        const btn = document.getElementById('copyBib');
+        const orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => (btn.textContent = orig), 1300);
+      } catch (e) { alert('Copy failed. Please select and copy manually.'); }
+    });
+
+    // --- Fill these links once available ---
+    const links = {
+      paper: '#',        // e.g., '/assets/hoi-diff.pdf' or arXiv link
+      code:  '#',        // e.g., 'https://github.com/yourrepo/hoi-diff'
+      arxiv: '#',        // e.g., arXiv URL
+      video: '#',        // e.g., YouTube/Bilibili link
+      dataset: '#',      // e.g., dataset page
+      project: '#'
+    };
+    document.getElementById('paperLink').href = links.paper;
+    document.getElementById('codeLink').href = links.code;
+    document.getElementById('arxivBtn').href = links.arxiv;
+    document.getElementById('videoBtn').href = links.video;
+    document.getElementById('datasetBtn').href = links.dataset;
+    document.getElementById('projectBtn').href = links.project;
+  </script>
+
+  <!--
+  ===== How to use =====
+  1) Put this single file as index.html in your repo or project page.
+  2) Replace hero teaser (assets/teaser.jpg) and pipeline diagram (assets/pipeline.png).
+  3) Fill the links above (paper/code/arxiv/video/dataset/project).
+  4) Replace placeholders in Data section with real numbers.
+  5) Deploy with GitHub Pages, Netlify, or Vercel.
+  6) Optional: add analytics or a custom domain.
+  -->
+</body>
+</html>
