@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>HOI-Diff: Text-Driven Synthesis of 3D Human-Object Interactions</title>
+  <title>MonoLift: Learning 3D Manipulation Policies from Monocular RGB via Distillation</title>
   <meta name="description" content="HOI-Diff generates realistic motions for 3D human–object interactions from text prompts and object geometry." />
-  <meta property="og:title" content="HOI-Diff: Text-Driven Synthesis of 3D Human-Object Interactions" />
+  <meta property="og:title" content="MonoLift: Learning 3D Manipulation Policies from Monocular RGB via Distillation" />
   <meta property="og:description" content="Dual-branch diffusion for human & object motions, affordance prediction diffusion, classifier guidance with contact points." />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="assets/teaser.jpg" />
@@ -14,13 +14,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    :root{
+    /* :root{
       --bg: #0c0f12; --card: #101418; --muted: #8ea0b5; --text: #e9eef5; --acc: #4cb8ff; --acc2:#9bffb1;
+      --ring: rgba(76,184,255,0.35);
+    } */
+    :root{
+      --bg: #ffffff; --card: #ffffff; --muted: #8ea0b5; --text: #e9eef5; --acc: #4cb8ff; --acc2:#9bffb1;
       --ring: rgba(76,184,255,0.35);
     }
     @media (prefers-color-scheme: light){
-      :root{ --bg:#f7f9fc; --card:#ffffff; --muted:#556476; --text:#0d1117; --acc:#0078ff; --acc2:#00c26e; --ring: rgba(0,120,255,.2); }
-      .hero{ background-image: radial-gradient(40% 120% at 50% -10%, #e6f2ff 0, transparent 60%), radial-gradient(50% 120% at 120% 10%, #e7fff0 0, transparent 60%); }
+      /* :root{ --bg:#f7f9fc; --card:#ffffff; --muted:#556476; --text:#0d1117; --acc:#0078ff; --acc2:#00c26e; --ring: rgba(0,120,255,.2); } */
+      :root{ --bg:#ffffff; --card:#ffffff; --muted:#556476; --text:#0d1117; --acc:#0078ff; --acc2:#00c26e; --ring: rgba(0,120,255,.2); }
+      /* .hero{ background-image: radial-gradient(40% 120% at 50% -10%, #e6f2ff 0, transparent 60%), radial-gradient(50% 120% at 120% 10%, #e7fff0 0, transparent 60%); } */
     }
     *{ box-sizing: border-box }
     html,body{ margin:0; padding:0; background:var(--bg); color:var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, sans-serif; }
@@ -34,7 +39,13 @@
     .nav a{ padding:8px 10px; border-radius:10px; }
 
     .hero{ position:relative; padding:56px 0 24px; border-bottom:1px solid rgba(255,255,255,0.06); overflow:hidden; }
-    .hero h1{ margin:0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height:1.05; letter-spacing:-0.02em; }
+    /* .hero h1{ margin:0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height:1.05; letter-spacing:-0.02em; } */
+    .hero h1 {
+        margin: 0 0 10px;
+        font-size: clamp(24px, 3.4vw, 40px);  /* ✅ 比刚才略大一点 */
+        line-height: 1.12;
+        letter-spacing: -0.02em;
+      } 
     .subtitle{ color: var(--muted); font-weight:600; margin-bottom:12px }
 
     .actions{ display:flex; flex-wrap:wrap; gap:10px; margin:22px 0 6px }
@@ -66,8 +77,10 @@
     .code{ font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; white-space: pre; background:#0a0e13; color:#dbeafe; padding:14px; border-radius:12px; border:1px solid rgba(255,255,255,0.08); overflow:auto }
 
     .gallery{ display:grid; grid-template-columns: repeat(2,1fr); gap:12px }
-    @media (min-width: 780px){ .gallery{ grid-template-columns: repeat(4,1fr) } }
-    .thumb{ aspect-ratio: 1/1; border-radius:12px; background:#0b0e12; border:1px solid rgba(255,255,255,0.08); display:grid; place-items:center; overflow:hidden }
+    /* @media (min-width: 780px){ .gallery{ grid-template-columns: repeat(4,1fr) } } */
+    @media (min-width: 780px){ .gallery{ grid-template-columns: repeat(3,1fr) } }
+    /* .thumb{ aspect-ratio: 1/1; border-radius:12px; background:#0b0e12; border:1px solid rgba(255,255,255,0.08); display:grid; place-items:center; overflow:hidden } */
+    .thumb{ aspect-ratio: 1/1; border-radius:12px; background:#fff; border:1px solid rgba(255,255,255,0.08); display:grid; place-items:center; overflow:hidden }
     .thumb img{ width:100%; height:100%; object-fit:cover }
 
     footer{ padding:28px 0 60px; color: var(--muted); font-size:14px }
@@ -84,15 +97,15 @@
   <!-- Top Nav -->
   <div class="nav">
     <div class="container nav-inner">
-      <div class="brand">HOI-Diff</div>
+      <div class="brand">MonoLift</div>
       <a href="#abstract">Abstract</a>
       <a href="#method">Method</a>
-      <a href="#results">Results</a>
-      <a href="#data">Data</a>
-      <a href="#citation">Citation</a>
+      <a href="#results">Video</a>
+      <!-- <a href="#data">Data</a> -->
+      <!-- <a href="#citation">Citation</a> -->
       <div class="spacer"></div>
-      <a class="btn" href="#" id="paperLink">Paper</a>
-      <a class="btn" href="#" id="codeLink">Code</a>
+      <!-- <a class="btn" href="#" id="paperLink">Paper</a> -->
+      <!-- <a class="btn" href="#" id="codeLink">Code</a> -->
     </div>
   </div>
 
@@ -100,43 +113,42 @@
   <header class="hero">
     <div class="container grid two">
       <div>
-        <h1>HOI-Diff: Text-Driven Synthesis of 3D Human‑Object Interactions using Diffusion Models</h1>
-        <div class="subtitle">CVPR 2025 Workshop of HuMoGen</div>
+        <h1>MonoLift: Learning 3D Manipulation Policies from Monocular RGB via Distillation</h1>
+        <div class="subtitle">NeurIPS 2026 Spotlight</div>
 
         <!-- Authors -->
         <div class="authors">
-          <div class="author">Xiaogang Peng<span class="star">*</span><sup>1</sup></div>
-          <div class="author">Yiming Xie<span class="star">*</span><sup>1</sup></div>
-          <div class="author">Zizhao Wu<sup>2</sup></div>
-          <div class="author">Varun Jampani<sup>3</sup></div>
-          <div class="author">Deqing Sun<sup>4</sup></div>
-          <div class="author">Huaizu Jiang<sup>1</sup></div>
+          <!-- <div class="author">Ziru Wang<span class="star">*</span><sup>1</sup></div> -->
+          <div class="author">Ziru Wang<sup></sup></div>
+          <div class="author">Mengmeng Wang<span class="star">*</span></div>
+          <div class="author">Guang Dai<sup></div>
+          <div class="author">Yongliu Long<sup></div>
+          <div class="author">Jingdong Wang<sup></div>
         </div>
-        <div class="affils">1 Northeastern University &nbsp;·&nbsp; 2 Hangzhou Dianzi University &nbsp;·&nbsp; 3 Stability AI &nbsp;·&nbsp; 4 Google Research &nbsp;&nbsp; <span class="muted">* equal contribution</span></div>
+        <!-- <div class="affils">1 Northeastern University &nbsp;·&nbsp; 2 Hangzhou Dianzi University &nbsp;·&nbsp; 3 Stability AI &nbsp;·&nbsp; 4 Google Research &nbsp;&nbsp; <span class="muted">* equal contribution</span></div> -->
 
         <!-- Action Buttons -->
-        <div class="actions">
+        <!-- <div class="actions">
           <a class="btn primary" href="#" id="projectBtn">Project Page</a>
           <a class="btn" href="#" id="arxivBtn">arXiv</a>
           <a class="btn" href="#" id="videoBtn">Video</a>
           <a class="btn" href="#" id="datasetBtn">Dataset</a>
           <a class="btn" href="#" id="bibtexBtn">BibTeX</a>
-        </div>
+        </div> -->
 
-        <div class="list-badges">
+        <!-- <div class="list-badges">
           <div class="badge">Text → 3D HOIs</div>
           <div class="badge">Dual-branch Diffusion</div>
           <div class="badge">Affordance Prediction (APDM)</div>
           <div class="badge">Classifier Guidance w/ Contacts</div>
           <div class="badge">BEHAVE + OMOMO</div>
-        </div>
+        </div> -->
       </div>
 
-      <!-- Teaser media (replace src with your image/video) -->
-      <div class="teaser">
-        <!-- Example placeholder image; replace with your teaser.jpg or an embedded <video> -->
-        <img src="assets/teaser.jpg" alt="HOI-Diff teaser: human-object interactions generated from text and object geometry" />
-      </div>
+      <!-- Teaser media (replace src with your image/video)
+      <!-- <div class="teaser"> -->
+        <img src="intro.jpg" alt="Intro pipeline diagram" style="width:300px; height:auto;">
+      </div> 
     </div>
   </header>
 
@@ -144,19 +156,15 @@
     <!-- Abstract (with EN/中文 tabs) -->
     <section id="abstract" class="section">
       <h2>Abstract</h2>
-      <div class="tabs" role="tablist" aria-label="Abstract language">
+      <!-- <div class="tabs" role="tablist" aria-label="Abstract language">
         <button class="tab" role="tab" aria-selected="true" aria-controls="abs-en" id="tab-en">English</button>
         <button class="tab" role="tab" aria-selected="false" aria-controls="abs-zh" id="tab-zh">中文</button>
-      </div>
+      </div> -->
       <div class="tabpanels">
         <div id="abs-en" role="tabpanel" aria-hidden="false">
           <p>
-            We address the problem of generating realistic 3D human–object interactions (HOIs) driven by textual prompts. We propose a modular approach that decomposes the task into sub‑problems. First, a dual‑branch diffusion model (HOI‑DM) generates both human and object motions conditioned on text, with a cross‑attention communication module to encourage coherence. Next, an affordance prediction diffusion model (APDM) predicts human‑object contact regions from the text prompt. APDM is independent of HOI‑DM outputs and can correct its errors, while also sampling contact points to diversify motions. Finally, we incorporate the estimated contacts into classifier guidance to achieve accurate, close interactions. We annotate the BEHAVE dataset with text descriptions for training and evaluation. Experiments on BEHAVE and OMOMO show realistic HOIs across diverse interactions and object categories.
-          </p>
-        </div>
-        <div id="abs-zh" role="tabpanel" aria-hidden="true">
-          <p>
-            我们研究由文本驱动的真实三维人‑物交互（HOI）生成问题。为此，我们采用模块化设计，将复杂任务分解为更简单的子任务。首先，我们提出双分支扩散模型（HOI‑DM），在文本条件下同时生成人体与物体运动，并通过跨注意力通信模块促进两者的协同。其次，我们提出可供性预测扩散模型（APDM），根据文本预测交互过程中的接触区域。APDM 独立于 HOI‑DM 的结果，能纠正其潜在错误，并通过随机化接触点来丰富多样性。最后，我们将估计的接触点融入分类器引导，实现精确且紧密的人‑物接触。我们为 BEHAVE 数据集标注了文本描述用于训练与评估。在 BEHAVE 与 OMOMO 上的实验表明，我们的方法在多种交互与不同物体类型上均能生成逼真的 HOI。
+            Although learning 3D manipulation policies from monocular RGB images is lightweight and deployment-friendly, the lack of structural information often leads to inaccurate action estimation. While explicit 3D inputs can mitigate this issue, they typically require additional sensors and introduce data acquisition overhead. An intuitive alternative is to incorporate a pre-trained depth estimator; however, this often incurs substantial inference-time cost. To address this, we propose MonoLift, a tri-level knowledge distillation framework that transfers spatial, temporal, and action-level knowledge from a depth-guided teacher to a monocular RGB student. By jointly distilling geometry-aware features, temporal dynamics, and policy behaviors during training, MonoLift enables the student model to perform 3D-aware reasoning and precise control at deployment using only monocular RGB input.
+            Extensive experiments on both simulated and real-world manipulation tasks show that MonoLift not only outperforms existing monocular approaches but even surpasses several methods that rely on explicit 3D input, offering a resource-efficient and effective solution for vision-based robotic control.
           </p>
         </div>
       </div>
@@ -165,55 +173,85 @@
     <!-- Method -->
     <section id="method" class="section">
       <h2>Method Overview</h2>
-      <div class="grid two">
-        <div class="card">
-          <h3>HOI‑DM: Dual‑Branch Diffusion</h3>
-          <p class="muted">Generate human and object motions in parallel under text conditioning.</p>
-          <ul>
-            <li>Two diffusion branches (human / object) with shared text encoder.</li>
-            <li>Cross‑attention communication to align trajectories and timing.</li>
-            <li>Outputs temporally coherent motion sequences.</li>
-          </ul>
+      <div class="card" style="margin-top:0px">
+        <h3>MonoLift</h3>
+        <!-- <p>We identify three
+          fundamental challenges in policy learning from
+          RGB-only inputs: (i) difficulty in spatial disambiguation, (ii) limited temporal cues, and
+          (iii) misguided actions due to absent 3D priors.
+          These observations motivate our tri-level knowledge distillation framework, which targets each limitations through three complementary components: (i) Spatial Representation Distillation: Transfers
+          fused RGB–depth features from the teacher to help the student disambiguate visually similar yet
+          structurally different observations. (ii) Temporal Dynamics Distillation: Aligns temporal feature
+          trajectories to enable the student to capture motion patterns that reflect underlying 3D structural
+          changes. (iii) Action Distribution Distillation: Transfers action distributions shaped by the teacher’s
+          3D understanding, guiding the student to generate geometry-aware behaviors.</p>         
+        <div class="teaser" style="margin-top:-10px; background:none;">
+          <img src="method.jpg" alt="Method pipeline diagram" style="width:900px; height:auto;">
+        </div> -->
+        <p style="margin-bottom: -90px;">
+          We identify three
+        fundamental challenges in policy learning from
+        RGB-only inputs: 
+        
+        (i) difficulty in spatial disambiguation, 
+        (ii) limited temporal cues, and
+        (iii) misguided actions due to absent 3D priors.
+
+        These observations motivate our tri-level knowledge distillation framework, which targets each limitations through three complementary components: (i) Spatial Representation Distillation: Transfers
+        fused RGB–depth features from the teacher to help the student disambiguate visually similar yet
+        structurally different observations. (ii) Temporal Dynamics Distillation: Aligns temporal feature
+        trajectories to enable the student to capture motion patterns that reflect underlying 3D structural
+        changes. (iii) Action Distribution Distillation: Transfers action distributions shaped by the teacher’s
+        3D understanding, guiding the student to generate geometry-aware behaviors.
+        </p>
+        <!-- <div class="teaser" style="margin-top: 0; background:none;"> -->
+        <div class="teaser" style="margin-bottom: -80px; background:none;">
+          <img src="method.jpg" alt="Method pipeline diagram" style="width:900px; height:auto;">
         </div>
-        <div class="card">
-          <h3>APDM: Affordance Prediction</h3>
-          <p class="muted">Predict likely contact regions given the text and object geometry.</p>
-          <ul>
-            <li>Independent of HOI‑DM to enable error correction.</li>
-            <li>Stochastic sampling of contact points for diverse motions.</li>
-            <li>Contact‑aware losses during training.</li>
-          </ul>
-        </div>
-      </div>
-      <div class="card" style="margin-top:14px">
-        <h3>Classifier Guidance with Contact Points</h3>
-        <p>Estimated contact points are injected as guidance to enforce accurate, close human‑object interactions at inference time.</p>
-        <div class="teaser" style="margin-top:10px">
-          <!-- Replace with a pipeline diagram -->
-          <img src="assets/pipeline.png" alt="Method pipeline diagram" />
-        </div>
+
       </div>
     </section>
 
     <!-- Results -->
     <section id="results" class="section">
-      <h2>Results</h2>
-      <p class="muted">Generated HOIs from various text prompts and object categories.</p>
+      <h2>Real-World Videos</h2>
       <div class="gallery">
         <!-- Replace thumbnails with your result images or auto‑playing GIFs -->
-        <div class="thumb"><img src="assets/results/res1.jpg" alt="Sample result 1"/></div>
-        <div class="thumb"><img src="assets/results/res2.jpg" alt="Sample result 2"/></div>
-        <div class="thumb"><img src="assets/results/res3.jpg" alt="Sample result 3"/></div>
-        <div class="thumb"><img src="assets/results/res4.jpg" alt="Sample result 4"/></div>
-        <div class="thumb"><img src="assets/results/res5.jpg" alt="Sample result 5"/></div>
-        <div class="thumb"><img src="assets/results/res6.jpg" alt="Sample result 6"/></div>
-        <div class="thumb"><img src="assets/results/res7.jpg" alt="Sample result 7"/></div>
-        <div class="thumb"><img src="assets/results/res8.jpg" alt="Sample result 8"/></div>
+        <div class="thumb">
+          <!-- <figure class="thumb-fig"> -->
+            <video src="button.mp4" controls playsinline style="width:80%;height:80%;object-fit:cover;"></video>
+            <figcaption>Press a button</figcaption>
+          <!-- </figure> -->
+        </div>
+        <div class="thumb">
+          <video src="box.mp4" controls playsinline style="width:80%;height:80%;object-fit:cover;"></video>
+          <figcaption>Push a box
+            into a goal</figcaption>
+        </div>
+        <div class="thumb">
+          <video src="tissue.mp4" controls playsinline style="width:80%;height:80%;object-fit:cover;"></video>
+          <figcaption>Pull out a tissue</figcaption>
+        </div>
+        <div class="thumb">
+          <video src="grape.mp4" controls playsinline style="width:80%;height:80%;object-fit:cover;"></video>
+          <figcaption>pick up grapes
+            and place them
+            in a plate</figcaption>
+        </div>
+        <div class="thumb">
+          <video src="cup.mp4" controls playsinline style="width:80%;height:80%;object-fit:cover;"></video>
+          <figcaption>Lift a cup and
+            pour water</figcaption>
+        </div>
+        <div class="thumb">
+          <video src="towel.mp4" controls playsinline style="width:80%;height:80%;object-fit:cover;"></video>
+          <figcaption>Fold a towel</figcaption>
+        </div>
       </div>
     </section>
 
     <!-- Data / Annotations -->
-    <section id="data" class="section">
+    <!-- <section id="data" class="section">
       <h2>Data & Annotations</h2>
       <div class="grid two">
         <div class="card">
@@ -235,38 +273,38 @@
           </ul>
         </div>
       </div>
-    </section>
+    </section> -->
 
     <!-- BibTeX -->
-    <section id="citation" class="section">
+    <!-- <section id="citation" class="section">
       <h2>Citation</h2>
       <div class="card">
         <div style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap">
           <div class="muted">If you find this work useful, please cite:</div>
           <button id="copyBib" class="btn">Copy BibTeX</button>
         </div>
-        <pre class="code" id="bibtex">
-@inproceedings{peng2025hoidiff,
+        <pre class="code" id="bibtex"> -->
+<!-- @inproceedings{peng2025hoidiff,
   title     = {HOI-Diff: Text-Driven Synthesis of 3D Human-Object Interactions using Diffusion Models},
   author    = {Peng, Xiaogang and Xie, Yiming and Wu, Zizhao and Jampani, Varun and Sun, Deqing and Jiang, Huaizu},
   booktitle = {CVPR Workshops (HuMoGen)},
   year      = {2025}
-}
+} -->
         </pre>
       </div>
     </section>
 
     <!-- FAQ / Contact -->
-    <section class="section">
+    <!-- <section class="section">
       <h2>Contact</h2>
       <p class="muted">Questions or media inquiries? Email <a href="mailto:contact@example.com">contact@example.com</a>.</p>
     </section>
-  </main>
+  </main> -->
 
-  <footer class="container">
+  <!-- <footer class="container">
     <div>© 2025 The HOI-Diff Authors. All rights reserved.</div>
     <div class="muted">This site uses only static HTML/CSS/JS. Replace placeholder images under <code>assets/</code> with your own media.</div>
-  </footer>
+  </footer> -->
 
   <script>
     // --- Tabs for Abstract ---
@@ -298,20 +336,20 @@
     });
 
     // --- Fill these links once available ---
-    const links = {
-      paper: '#',        // e.g., '/assets/hoi-diff.pdf' or arXiv link
-      code:  '#',        // e.g., 'https://github.com/yourrepo/hoi-diff'
-      arxiv: '#',        // e.g., arXiv URL
-      video: '#',        // e.g., YouTube/Bilibili link
-      dataset: '#',      // e.g., dataset page
-      project: '#'
-    };
-    document.getElementById('paperLink').href = links.paper;
-    document.getElementById('codeLink').href = links.code;
-    document.getElementById('arxivBtn').href = links.arxiv;
-    document.getElementById('videoBtn').href = links.video;
-    document.getElementById('datasetBtn').href = links.dataset;
-    document.getElementById('projectBtn').href = links.project;
+    // const links = {
+    //   paper: '#',        // e.g., '/assets/hoi-diff.pdf' or arXiv link
+    //   code:  '#',        // e.g., 'https://github.com/yourrepo/hoi-diff'
+    //   arxiv: '#',        // e.g., arXiv URL
+    //   video: '#',        // e.g., YouTube/Bilibili link
+    //   dataset: '#',      // e.g., dataset page
+    //   project: '#'
+    // };
+    // document.getElementById('paperLink').href = links.paper;
+    // document.getElementById('codeLink').href = links.code;
+    // document.getElementById('arxivBtn').href = links.arxiv;
+    // document.getElementById('videoBtn').href = links.video;
+    // document.getElementById('datasetBtn').href = links.dataset;
+    // document.getElementById('projectBtn').href = links.project;
   </script>
 
   <!--
